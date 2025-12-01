@@ -33,36 +33,24 @@ We utilize a system of specialized agents because a monolithic script cannot han
 ## Architecture: 5 Specialized Agents
 
 The system relies on 5 Specialized Agents coordinating via a central Orchestrator.
-
-```
-INPUT SOURCES (text, email, voice)
-    ↓
-INPUT PROCESSOR AGENT
-(Detects type, normalizes format)
-    ↓
-PARSER AGENT (with Gemini 2.5 Flash)
-(Extracts: title, description, priority, due_date, labels)
-    ↓
-ENRICHER AGENT (with context from SessionMemory)
-(Enhances: priority, labels, due_date based on patterns)
-    ↓
-VIKUNJA AGENT
-(Creates task with color based on input source)
-    ↓
-VIKUNJA DATABASE
-(Task stored with metadata and color)
-    ↓
-SESSION MEMORY
-(Learns patterns for future enrichment)
-```
-
-
-### Core Components
 1. **Input Processor** - Handles text, email, and voice inputs
 2. **Parser Agent** - Extracts structured task data using Gemini LLM
 3. **Enricher Agent** - Enhances tasks with context and patterns
 4. **Vikunja Agent** - Creates tasks in Vikunja with color-coding
 5. **Orchestrator** - Coordinates multi-agent workflow
+
+```mermaid
+graph TD
+    A[Input Sources] -->|Text/Email/Voice| B(Input Processor Agent)
+    B -->|Normalized Data| C{Orchestrator}
+    C -->|Raw Text| D[Parser Agent]
+    D -->|Extracted JSON| C
+    C -->|Task + Context| E[Enricher Agent]
+    E -->|Enriched JSON| C
+    C -->|Final Payload| F[Vikunja Agent]
+    F -->|REST API| G[(Vikunja Database)]
+    C <-->|Read/Write Patterns| H[(Session Memory)]
+```
 
 ### Tools
 - **Gemini LLM Service** - Task extraction and enrichment
@@ -78,18 +66,8 @@ SESSION MEMORY
 - **Storage:** SessionMemory (in-memory) + Vikunja DB
 
 ### How it works
-```mermaid
-graph TD
-    A[Input Sources] -->|Text/Email/Voice| B(Input Processor Agent)
-    B -->|Normalized Data| C{Orchestrator}
-    C -->|Raw Text| D[Parser Agent]
-    D -->|Extracted JSON| C
-    C -->|Task + Context| E[Enricher Agent]
-    E -->|Enriched JSON| C
-    C -->|Final Payload| F[Vikunja Agent]
-    F -->|REST API| G[(Vikunja Database)]
-    C <-->|Read/Write Patterns| H[(Session Memory)]
-```
+<img width="2816" height="1536" alt="Graphical_Abstract" src="https://github.com/user-attachments/assets/0755ee0a-2b7d-41e0-a267-5d3d8e6582e9" />
+
 
 ### Color Scheme
 - 🔵 **Dark Blue** (#03346E) - Voice input
@@ -241,3 +219,6 @@ Expected output:
 - Color-coded in Vikunja dashboard
 - Logs showing extraction and enrichment
 
+Sample Output:
+<img width="1920" height="1200" alt="Vikunja_sshot_2" src="https://github.com/user-attachments/assets/0663c3d9-5f1d-4316-a7d8-b4045852d9cf" />
+<img width="1920" height="1200" alt="Vikunja_sshot_1" src="https://github.com/user-attachments/assets/26feb82a-3622-4de2-883d-594f3dbb1afb" />
