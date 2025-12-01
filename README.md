@@ -1,10 +1,61 @@
+# TaskFlow AI - Multi-Channel Agentic Task Orchestrator
 
-# TaskFlow AI - Multi-Channel Task Management System
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-orange)
+![Vikunja](https://img.shields.io/badge/Task%20Manager-Vikunja-blueviolet)
 
-## Overview
-TaskFlow AI is a multi-agent system that processes tasks from multiple input channels (text, email, voice) and organizes them in Vikunja with intelligent enrichment and color-coding.
+TaskFlow AI is a multi-agent system designed to solve "Input Fragmentation." It acts as an intelligent executive assistant that aggregates tasks from Voice, Email, and Text, enriches them with context using Google's Gemini 2.5 Flash, and organizes them into Vikunja with intuitive color-coding.
 
-## Architecture
+
+## Introduction
+
+In our modern digital lives, tasks don't come from a single source. They arrive as fragmented data points: a quick voice note while driving, a forwarded email from a client, or a hasty text message sent to oneself. The cognitive load of aggregating these inputs into a structured to-do list is often heavier than the tasks themselves.
+
+TaskFlow AI solves this by deploying an agentic mesh that listens, understands, enriches, and organizes tasks automatically, preserving context and reducing friction.
+
+
+## Problem & Solution
+
+### The Problem
+Task management across multiple channels is fragmented and inefficient. Users struggle with:
+* **Context Switching:** Manually copying data from emails or transcripts to to-do lists.
+* **Loss of Detail:** Forgetting the "why" or "when" behind a quick note.
+* **Organization Chaos:** All tasks look the same, regardless of urgency or source.
+
+### The Solution: Agentic Architecture
+We utilize a system of specialized agents because a monolithic script cannot handle the complexity of:
+1.  **Input Normalization:** Handling raw audio, SMTP payloads, and CLI text.
+2.  **Natural Language Understanding:** Using LLMs to extract intent.
+3.  **Contextual Enrichment:** Learning patterns from session history.
+
+
+## Architecture: 5 Specialized Agents
+
+The system relies on 5 Specialized Agents coordinating via a central Orchestrator.
+
+```
+INPUT SOURCES (text, email, voice)
+    ↓
+INPUT PROCESSOR AGENT
+(Detects type, normalizes format)
+    ↓
+PARSER AGENT (with Gemini 2.5 Flash)
+(Extracts: title, description, priority, due_date, labels)
+    ↓
+ENRICHER AGENT (with context from SessionMemory)
+(Enhances: priority, labels, due_date based on patterns)
+    ↓
+VIKUNJA AGENT
+(Creates task with color based on input source)
+    ↓
+VIKUNJA DATABASE
+(Task stored with metadata and color)
+    ↓
+SESSION MEMORY
+(Learns patterns for future enrichment)
+```
+
 
 ### Core Components
 1. **Input Processor** - Handles text, email, and voice inputs
@@ -19,38 +70,32 @@ TaskFlow AI is a multi-agent system that processes tasks from multiple input cha
 - **Email Tools** - Email parsing
 - **Voice Tools** - Audio transcription (mock mode)
 
-### Block Diagram
+### Core Stack
+- **Language:** Python 3.11+
+- **Framework:** Async/await (asyncio)
+- **LLM:** Google Gemini 2.5 Flash API
+- **Task Manager:** Vikunja (self-hosted via Docker)
+- **Storage:** SessionMemory (in-memory) + Vikunja DB
+
+### How it works
+```mermaid
+graph TD
+    A[Input Sources] -->|Text/Email/Voice| B(Input Processor Agent)
+    B -->|Normalized Data| C{Orchestrator}
+    C -->|Raw Text| D[Parser Agent]
+    D -->|Extracted JSON| C
+    C -->|Task + Context| E[Enricher Agent]
+    E -->|Enriched JSON| C
+    C -->|Final Payload| F[Vikunja Agent]
+    F -->|REST API| G[(Vikunja Database)]
+    C <-->|Read/Write Patterns| H[(Session Memory)]
 ```
-INPUT SOURCES
-    │
-    ├─ TEXT INPUT
-    ├─ EMAIL INPUT
-    └─ VOICE INPUT
-    │
-    ▼
-INPUT PROCESSOR
-(Normalize & validate)
-    │
-    ▼
-PARSER AGENT
-(Extract with Gemini)
-    │
-    ▼
-ENRICHER AGENT
-(Enhance with context)
-    │
-    ▼
-VIKUNJA AGENT
-(Create tasks with colors)
-    │
-    ▼
-VIKUNJA DATABASE
-(Tasks stored)
-    │
-    ▼
-SESSION MEMORY
-(Learn patterns)
-```
+
+### Color Scheme
+- 🔵 **Dark Blue** (#03346E) - Voice input
+- 🟣 **Plum** (#8C3061) - Email input
+- 🟦 **Dark Teal** (#1A3636) - Text input
+
 
 ## Features
 - [x] Multi-channel input (text, email, voice)
@@ -62,60 +107,60 @@ SESSION MEMORY
 - [x] OpenTelemetry tracing support
 - [x] Error handling & graceful degradation
 
-## Color Scheme
-- 🔵 **Dark Blue** (#03346E) - Voice input
-- 🟣 **Plum** (#8C3061) - Email input
-- 🟦 **Dark Teal** (#1A3636) - Text input
 
-## Setup
+## Why Agents?
 
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.11+
-- Gemini API key: https://makersuite.google.com/app/apikey
+Agents are the ideal solution because:
 
-### Installation
+1. **Specialization** - Each agent handles one responsibility
+   - InputProcessor: Multi-channel input normalization
+   - ParserAgent: Natural language task extraction
+   - EnricherAgent: Context-based task enhancement
+   - VikunjaBAgent: Task creation with color-coding
+   - Orchestrator: Coordinates the workflow
 
-1. Clone repository:
-```bash
-git clone <your-repo>
-cd taskflow-ai
-```
+2. **Modularity** - Easy to add/replace components
+   - Swap LLM provider (Gemini → Claude, etc.)
+   - Add new input channels (SMS, Slack, etc.)
+   - Replace Vikunja with different task manager
 
-2. Create .env file:
-```bash
-cp .env.example .env
-# Edit .env with your credentials
-```
+3. **Observability** - Clear logging at each step
+   - Track input through pipeline
+   - Debug failures at specific agent
+   - Monitor performance per component
 
-3. Start Vikunja:
-```bash
-docker-compose up -d
-```
+4. **Scalability** - Handles complexity through composition
+   - 3 inputs handled by 1 processor
+   - 5 agents coordinate automatically
+   - 4 tools integrated seamlessly
 
-4. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
 
-5. Run:
-```bash
-python main.py
-```
+## Why this matters 
 
-## Demo
+TaskFlow AI moves beyond simple "trigger-action" automation (like IFTTT) by deploying a context-aware agentic mesh that actively reasons about your data.
 
-Run the interactive demo:
-```bash
-python demo.py
-```
+1. True Multi-Channel Unification: Seamlessly aggregates three distinct communication protocols—SMTP (Email), Audio Streams (Voice), and CLI/Chat (Text)—into a single normalised pipeline. 
 
-Expected output:
-- 3 sample tasks created
-- Color-coded in Vikunja dashboard
-- Logs showing extraction and enrichment
+2. Source-Aware Visualization: Automatically injects visual cues into Vikunja (Color-coding: Blue=Voice, Plum=Email) so users can instantly identify the origin of a task at a glance.
 
-## Project Structure
+3. Intelligent Agentic Orchestration: Contextual Enrichment: Unlike standard parsers, the Enricher Agent uses Session Memory to understand vague requests (e.g., "Add a subtask to that project we discussed" links to the previous context automatically). 
+
+4. Gemini 2.5 Flash Powered: Leverages the sub-second latency of Google's latest model to parse complex natural language into strict JSON structures with near-zero waiting time.
+
+5. Graceful Degradation: The Orchestrator ensures reliability; if the Enrichment Agent fails, the Parser Agent still delivers the core task, ensuring no user input is ever lost.
+
+
+| Feature | Old Way (Zapier/Scripts) | TaskFlow AI Way |
+| :--- | :--- | :--- |
+| **Logic** | Simple `If This Then That` rules | **LLM-based Reasoning** (Intent extraction) |
+| **Context** | Stateless (Each run is new) | **Session Memory** (Remembers previous turns) |
+| **Speed** | Polling intervals (1-15 mins) | **Event-Driven Real-time** processing |
+| **Visibility** | "It failed." | **OpenTelemetry** Trace ID `a1b2...` shows exactly where. |
+
+
+## Demo:
+
+### Project Structure
 ```
 taskflow-ai
 ├─ agents
@@ -148,38 +193,51 @@ taskflow-ai
    └─ __init__.py
 ```
 
-## Course Concepts Covered
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.11+
+- Gemini API key: https://makersuite.google.com/app/apikey
 
-| Day | Concept | Implementation |
-|-----|---------|-----------------|
-| **Day 1** | Multi-agent Architecture | 5 specialized agents |
-| **Day 2** | Tools & Integration | 4 tools with Gemini & Vikunja |
-| **Day 3** | Context & Memory | SessionMemory with pattern learning |
-| **Day 4** | Quality & Observability | JSON logging + OpenTelemetry tracing |
-| **Day 5** | Production Deployment | Error handling, graceful degradation, containerization |
+### Step 1: Bring Up the System
+```bash
+# Start Vikunja
+docker-compose up -d
 
-## Troubleshooting
+# Setup account in Vikunja dashboard by logging into 'http://localhost:3456/'
 
-### Vikunja 404 Error
-- Ensure VIKUNJA_PROJECT_ID=18 in .env
-- Verify Vikunja is running: docker-compose ps
+# Update the API Key and other details in the .env file
+cp .env.example .env # Now edit .env file with your details
 
-### Gemini API Error
-- Verify GEMINI_API_KEY is set correctly
-- Key should start with "AIza"
+# Install dependencies
+pip install -r requirements.txt
 
-### Tasks not appearing in Vikunja
-- Check logs for errors
-- Verify Vikunja credentials in .env
-- Ensure project exists in Vikunja
+# Run demo
+python main.py
+```
 
-## Performance Notes
-- First task extraction: 2-3 seconds (Gemini API)
-- Subsequent tasks: 1-2 seconds
-- Total session: ~5 seconds for 3 tasks
+### Step 2: Processing Pipeline
+```
+Input 1: "Fix the login bug by Friday - it's critical"
+  → Detected as: TEXT
+  → Extracted: title="Fix the login bug", priority=2
+  → Created: Dark Teal task (#1A3636)
 
-## Future Enhancements
-- Real voice transcription (Whisper API)
-- Task scheduling and reminders
-- Team collaboration features
-- Advanced analytics and reporting
+Input 2: "From: manager@company.com\nSubject: Review Q1 Marketing..."
+  → Detected as: EMAIL
+  → Extracted: title="Review Q1 Marketing Presentation"
+  → Created: Plum task (#8C3061)
+
+Input 3: "Schedule team sync about new API design"
+  → Detected as: TEXT
+  → Extracted: title="Schedule team sync"
+  → Created: Dark Teal task (#1A3636)
+```
+
+### Step 3: Results in Vikunja
+Open Vikunja dashboard
+
+Expected output:
+- 3 sample tasks created
+- Color-coded in Vikunja dashboard
+- Logs showing extraction and enrichment
+
